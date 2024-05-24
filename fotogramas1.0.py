@@ -4,20 +4,14 @@ import time
 import socket
 from threading import Thread, Lock
 
+
 def leer_fotograma(video, frame_index):
-    """
-    Lee un fotograma específico de un video.
-    Parámetros:
-        video (cv2.VideoCapture): Objeto de captura de video.
-        frame_index (int): Índice del fotograma a leer.
-    Retorna:
-        frame: El fotograma leído.
-    """
     video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
     ret, frame = video.read()
     if not ret:
         return None
     return frame
+
 
 def reproducir_video_local(ruta_video, fps=60, global_frame_index=None, global_frame_index_lock=None):
     video = cv2.VideoCapture(ruta_video)
@@ -38,6 +32,7 @@ def reproducir_video_local(ruta_video, fps=60, global_frame_index=None, global_f
     video.release()
     cv2.destroyAllWindows()
 
+
 def enviar_fotogramas(client_socket, ruta_video, fps=30, global_frame_index=None, global_frame_index_lock=None):
     video = cv2.VideoCapture(ruta_video)
     num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -48,7 +43,11 @@ def enviar_fotogramas(client_socket, ruta_video, fps=30, global_frame_index=None
         frame = leer_fotograma(video, frame_index)
         if frame is None:
             break
-        encoded_frame = cv2.imencode('.jpg', frame)[1].tobytes()
+
+        # Mejora la calidad de la compresión JPEG
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+        encoded_frame = cv2.imencode('.jpg', frame, encode_param)[1].tobytes()
+
         try:
             client_socket.sendall(len(encoded_frame).to_bytes(4, byteorder='big'))
             client_socket.sendall(encoded_frame)
@@ -60,12 +59,15 @@ def enviar_fotogramas(client_socket, ruta_video, fps=30, global_frame_index=None
                 print(f"El socket del cliente {client_socket.getpeername()} ya está cerrado.")
             else:
                 raise e
+        time.sleep(1 / fps)
     video.release()
+
 
 def handle_client(client_socket, ruta_video, fps, global_frame_index, global_frame_index_lock):
     enviar_fotogramas(client_socket, ruta_video, fps, global_frame_index, global_frame_index_lock)
     client_socket.close()
     print(f"Cliente desconectado: {client_socket.getpeername()}")
+
 
 def main():
     ruta_video = "publi.mp4"
@@ -76,23 +78,22 @@ def main():
     server_socket.listen(5)
     print("Servidor iniciado. Esperando conexiones de clientes...")
 
-    # Crear un objeto de bloqueo para acceder al índice de fotograma global de manera segura
     global_frame_index_lock = Lock()
-
-    # Crear un objeto de valor para el índice de fotograma global
     global_frame_index = np.array([0], dtype=np.uint32)
 
-    # Iniciar hilo para la reproducción local del video
-    local_video_thread = Thread(target=reproducir_video_local, args=(ruta_video, fps, global_frame_index, global_frame_index_lock))
+    local_video_thread = Thread(target=reproducir_video_local,
+                                args=(ruta_video, fps, global_frame_index, global_frame_index_lock))
     local_video_thread.start()
 
     while True:
         client_socket, addr = server_socket.accept()
         print(f"Nueva conexión establecida con {addr}")
-        client_thread = Thread(target=handle_client, args=(client_socket, ruta_video, fps, global_frame_index, global_frame_index_lock))
+        client_thread = Thread(target=handle_client,
+                               args=(client_socket, ruta_video, fps, global_frame_index, global_frame_index_lock))
         client_thread.start()
 
     server_socket.close()
+
 
 if __name__ == "__main__":
     main()
