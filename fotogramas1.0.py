@@ -19,7 +19,7 @@ def leer_fotograma(video, frame_index):
         return None
     return frame
 
-def reproducir_video_local(ruta_video, fps=45, global_frame_index=None, global_frame_index_lock=None):
+def reproducir_video_local(ruta_video, fps=60, global_frame_index=None, global_frame_index_lock=None):
     video = cv2.VideoCapture(ruta_video)
     num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     start_time = time.time()
@@ -69,7 +69,7 @@ def handle_client(client_socket, ruta_video, fps, global_frame_index, global_fra
 
 def main():
     ruta_video = "publi.mp4"
-    fps = 45
+    fps = 60
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('192.168.100.115', 8000))
