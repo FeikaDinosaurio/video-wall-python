@@ -4,21 +4,20 @@ import time
 import socket
 from threading import Thread, Lock
 
-def generador_de_fotogramas(ruta_video):
+def leer_fotograma(video, frame_index):
     """
-    Genera fotogramas del video uno a uno.
+    Lee un fotograma específico de un video.
     Parámetros:
-        ruta_video (str): Ruta del archivo de video.
-    Yields:
-        frame: Un fotograma del video como una matriz NumPy.
+        video (cv2.VideoCapture): Objeto de captura de video.
+        frame_index (int): Índice del fotograma a leer.
+    Retorna:
+        frame: El fotograma leído.
     """
-    video = cv2.VideoCapture(ruta_video)
-    while True:
-        ret, frame = video.read()
-        if not ret:
-            break
-        yield frame
-    video.release()
+    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+    ret, frame = video.read()
+    if not ret:
+        return None
+    return frame
 
 def reproducir_video_local(ruta_video, fps=30, global_frame_index=None, global_frame_index_lock=None):
     video = cv2.VideoCapture(ruta_video)
@@ -27,9 +26,8 @@ def reproducir_video_local(ruta_video, fps=30, global_frame_index=None, global_f
     while True:
         with global_frame_index_lock:
             frame_index = global_frame_index[0]
-        video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-        ret, frame = video.read()
-        if not ret:
+        frame = leer_fotograma(video, frame_index)
+        if frame is None:
             break
         cv2.imshow('Video', frame)
         elapsed_time = time.time() - start_time
@@ -47,9 +45,8 @@ def enviar_fotogramas(client_socket, ruta_video, fps=30, global_frame_index=None
     while True:
         with global_frame_index_lock:
             frame_index = global_frame_index[0]
-        video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-        ret, frame = video.read()
-        if not ret:
+        frame = leer_fotograma(video, frame_index)
+        if frame is None:
             break
         encoded_frame = cv2.imencode('.jpg', frame)[1].tobytes()
         try:

@@ -15,7 +15,7 @@ def recibir_fotograma(sock):
 
 def main():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('192.168.100.113', 8000))
+    client_socket.connect(('192.168.100.115', 8000))
     print("Conexión establecida con el servidor.")
 
     while True:
