@@ -33,7 +33,7 @@ def reproducir_video_local(ruta_video, fps=30, global_frame_index=None, global_f
     cv2.destroyAllWindows()
 
 
-def enviar_fotogramas(client_socket, ruta_video, fps=30, global_frame_index=None, global_frame_index_lock=None):
+def enviar_fotogramas(client_socket, ruta_video, fps=45, global_frame_index=None, global_frame_index_lock=None):
     video = cv2.VideoCapture(ruta_video)
     num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     start_time = time.time()
@@ -45,7 +45,7 @@ def enviar_fotogramas(client_socket, ruta_video, fps=30, global_frame_index=None
             break
 
         # Mejora la calidad de la compresión JPEG
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 120]
         encoded_frame = cv2.imencode('.jpg', frame, encode_param)[1].tobytes()
 
         try:
