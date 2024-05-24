@@ -13,7 +13,7 @@ def leer_fotograma(video, frame_index):
     return frame
 
 
-def reproducir_video_local(ruta_video, fps=60, global_frame_index=None, global_frame_index_lock=None):
+def reproducir_video_local(ruta_video, fps=30, global_frame_index=None, global_frame_index_lock=None):
     video = cv2.VideoCapture(ruta_video)
     num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     start_time = time.time()
